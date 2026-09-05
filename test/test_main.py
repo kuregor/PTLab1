@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+import os
+
 import pytest
 
-from src.main import get_path_from_arguments
+from src.main import format_result, get_path_from_arguments, main
 
 
 @pytest.fixture()
@@ -26,3 +28,36 @@ def test_get_path_from_noncorrect_arguments(
         get_path_from_arguments(noncorrect_arguments_string[0])
 
     assert e.type == SystemExit
+
+
+def test_format_result_with_student() -> None:
+    message = format_result("Морозова Елена Игоревна")
+    assert "Морозова Елена Игоревна" in message
+    assert "76" in message and "3" in message
+
+
+def test_format_result_without_student() -> None:
+    assert "нет" in format_result(None)
+
+
+def test_main_on_yaml_datafile(monkeypatch, capsys, data_dir: str) -> None:
+    path = os.path.join(data_dir, "data.yaml")
+    monkeypatch.setattr("sys.argv", ["main.py", "-p", path])
+    main()
+    captured = capsys.readouterr().out
+    assert "Rating: " in captured
+    assert "Морозова Елена Игоревна" in captured
+
+
+def test_main_on_text_datafile(monkeypatch, capsys, data_dir: str) -> None:
+    path = os.path.join(data_dir, "data.txt")
+    monkeypatch.setattr("sys.argv", ["main.py", "-p", path])
+    main()
+    assert "Морозова Елена Игоревна" in capsys.readouterr().out
+
+
+def test_main_on_unsupported_format(monkeypatch, data_dir: str) -> None:
+    path = os.path.join(data_dir, "data.csv")
+    monkeypatch.setattr("sys.argv", ["main.py", "-p", path])
+    with pytest.raises(ValueError):
+        main()
