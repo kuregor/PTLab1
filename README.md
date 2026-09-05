@@ -52,10 +52,6 @@ lab_1
 |       |----data.txt                        исходный текстовый формат
 |       |----data.yaml                       те же данные в формате варианта
 |
-|----docs
-|       |----theory.md                       ответы на теоретические вопросы
-|       |----design                          исходники диаграмм
-|
 |----src
 |       |----Types.py                        псевдонимы типов
 |       |----DataReader.py                   абстрактный обработчик
@@ -193,16 +189,14 @@ Rating:  {'Абрамов Петр Сергеевич': 85.33333333333333, ...}
 
 ## Диаграммы
 
-Все три рисунка собраны на одном холсте:
-**<https://claude.ai/code/artifact/cd0eaa70-9856-4eb0-9c3b-369bb16dbaac>** —
-оттуда каждый экспортируется в PNG, а все три сразу — в PDF. Исходники
-диаграмм лежат в каталоге [`docs/design`](docs/design).
+Методические указания требуют привести в отчёте UML-диаграммы проекта. Их
+две: **диаграмма классов** показывает структуру — какие классы есть и как они
+связаны, **диаграмма последовательности** показывает поведение — в каком
+порядке объекты вызывают друг друга при одном запуске программы. Обе
+приведены ниже и отрисовываются прямо на этой странице, отдельные файлы
+изображений для этого не нужны.
 
-* Рисунок 1 — диаграмма классов проекта (`docs/uml-classes.png`)
-* Рисунок 2 — конвейер непрерывной интеграции (`docs/ci-pipeline.png`)
-* Рисунок 3 — модель ветвления Git (`docs/git-branching.png`)
-
-### Диаграмма классов
+### Рисунок 1 — диаграмма классов
 
 ```mermaid
 classDiagram
@@ -254,6 +248,39 @@ classDiagram
     main ..> StudentStats
 ```
 
+### Рисунок 2 — диаграмма последовательности
+
+```mermaid
+sequenceDiagram
+    actor U as Пользователь
+    participant M as main
+    participant F as ReaderFactory
+    participant R as YamlDataReader
+    participant C as CalcRating
+    participant S as StudentStats
+
+    U->>M: main.py -p data/data.yaml
+    M->>M: get_path_from_arguments(argv)
+    M->>F: create(path)
+    F->>R: создание обработчика по расширению
+    F-->>M: reader: DataReader
+    M->>R: read(path)
+    R-->>M: students: DataType
+    M->>C: CalcRating(students).calc()
+    C-->>M: rating: RatingType
+    M->>S: find_student_with_score_in_subjects()
+    S->>S: students_with_score_in_subjects(76, 3)
+    loop для каждого студента
+        S->>S: count_subjects_with_score(student, 76)
+    end
+    S-->>M: student либо None
+    alt студент найден
+        M->>U: результат: имя студента
+    else подходящих студентов нет
+        M->>U: сообщение об отсутствии
+    end
+```
+
 ## Модульное тестирование
 
 Тестами покрыты все классы проекта — 50 тестов в шести файлах:
@@ -293,7 +320,3 @@ classDiagram
 ## Лицензия
 
 Проект распространяется на условиях лицензии MIT — см. файл [LICENSE](LICENSE).
-
-## Теоретические вопросы
-
-Ответы на теоретические вопросы к отчёту — в файле [`docs/theory.md`](docs/theory.md).
